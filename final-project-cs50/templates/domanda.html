@@ -9,7 +9,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'DM Sans', sans-serif;
-      background: #f7f5f5;
+      background: #f1e3be;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -34,57 +34,6 @@
       text-transform: uppercase;
       color: #aaa;
     }
-
-    /* TIMER */
-    .timer-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.3rem;
-    }
-    .timer-circle {
-      position: relative;
-      width: 52px;
-      height: 52px;
-    }
-    .timer-circle svg {
-      transform: rotate(-90deg);
-      width: 52px;
-      height: 52px;
-    }
-    .timer-circle svg circle {
-      fill: none;
-      stroke-width: 3.5;
-    }
-    .timer-bg { stroke: #e8e4e4; }
-    .timer-fg {
-      stroke: #1a1a1a;
-      stroke-linecap: round;
-      transition: stroke-dashoffset 1s linear, stroke 0.3s;
-      stroke-dasharray: 138.2; /* 2π * 22 */
-      stroke-dashoffset: 0;
-    }
-    .timer-num {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1rem;
-      font-weight: 500;
-      color: #1a1a1a;
-    }
-
-    /* PROGRESS BAR */
-    .progress-bar {
-      width: 100%;
-      max-width: 620px;
-      height: 4px;
-      background: #e8e4e4;
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
 
     /* QUESTION */
     .question-box {
@@ -196,39 +145,33 @@
   </style>
 </head>
 <body>
-
-  <!-- TOP BAR -->
+  
   <div class="topbar">
     <div style="display:flex; align-items:center; gap:0.5rem;">
       <div class="pig-dots"><span></span><span></span></div>
       <span class="meta">{{ categoria }} · Liv. {{ difficolta }}</span>
     </div>
-
-  <!-- TIMER -->
-  <div class="timer-wrap">
-    <div class="timer-circle">
-      <svg viewBox="0 0 48 48">
-        <circle class="timer-bg" cx="24" cy="24" r="22"/>
-        <circle class="timer-fg" id="timerArc" cx="24" cy="24" r="22"/>
-      </svg>
-      <div class="timer-num" id="timerNum">{{ tempo }}</div>
-    </div>
   </div>
 
-  <!-- QUESTION -->
   <div class="question-box">
     <p>{{ domanda }}</p>
   </div>
 
-  <!-- ANSWERS -->
+  <!-- form nascosto-->
+  <form id="answerForm" action="/risposta" method="POST" style="display:none;">
+    <input type="hidden" name="scelta"   id="inputScelta">
+    <input type="hidden" name="corretta" id="inputCorretta" value="{{ risposte[risposta_corretta] }}">
+  </form>
+
   <div class="answers">
     {% set lettere = ['A', 'B', 'C', 'D'] %}
     {% for i in range(risposte | length) %}
     <button
       class="answer-btn"
       id="btn-{{ i }}"
-      onclick="answer(this, {{ 'true' if loop.index0 == risposta_corretta else 'false' }})"
       data-correct="{{ 'true' if loop.index0 == risposta_corretta else 'false' }}"
+      data-value="{{ risposte[i] }}"
+      onclick="answer(this)"
     >
       <span class="letter">{{ lettere[i] }}</span>
       {{ risposte[i] }}
@@ -238,57 +181,32 @@
 
   <div class="feedback" id="feedback"></div>
 
-  <button class="next-btn" id="nextBtn" onclick="next()">
-    {% if numero < totale %}Prossima domanda{% else %}Vedi risultato{% endif %}
-  </button>
+  <button class="next-btn" id="nextBtn" onclick="next()">{{ t.next_question }}</button>
+
+<script>
+  const MSG_CORRECT = "{{ t.correct_msg | safe }}";
+  const MSG_WRONG   = "{{ t.wrong_msg | safe }}";
+</script>
 
   <script>
-    const TOTAL_TIME = {{ tempo }};
-    const CIRCUMFERENCE = 138.2;
-    let timeLeft = TOTAL_TIME;
-    let interval = null;
     let answered = false;
 
-    const arc = document.getElementById('timerArc');
-    const num = document.getElementById('timerNum');
-
-    interval = setInterval(() => {
-      timeLeft--;
-      num.textContent = timeLeft;
-      arc.style.strokeDashoffset = CIRCUMFERENCE * (1 - timeLeft / TOTAL_TIME);
-
-      if (timeLeft <= 5) arc.style.stroke = '#e05454';
-      else if (timeLeft <= 10) arc.style.stroke = '#e8a82a';
-
-      if (timeLeft <= 0) {
-        clearInterval(interval);
-        if (!answered) timeout();
-      }
-    }, 1000);
-
-    function answer(btn, isCorrect) {
+    function answer(btn) {
       if (answered) return;
       answered = true;
-      clearInterval(interval);
       disableAll();
+
+      const isCorrect = btn.dataset.correct === 'true';
+      document.getElementById('inputScelta').value = btn.dataset.value;
 
       if (isCorrect) {
         btn.classList.add('correct');
-        showFeedback('Corretto! +' + timeLeft + ' pt', 'ok');
+        showFeedback(MSG_CORRECT, 'ok');
       } else {
         btn.classList.add('wrong');
         revealCorrect();
-        showFeedback('Sbagliato', 'ko');
+        showFeedback(MSG_WRONG, 'ko');
       }
-      document.getElementById('nextBtn').classList.add('visible');
-    }
-
-    function timeout() {
-      answered = true;
-      disableAll();
-      document.querySelectorAll('.answer-btn').forEach(b => b.classList.add('timeout'));
-      revealCorrect();
-      showFeedback('Tempo scaduto!', 'time');
       document.getElementById('nextBtn').classList.add('visible');
     }
 
@@ -308,10 +226,44 @@
       el.className = 'feedback ' + type;
     }
 
-    function next() {
-      window.location.href = "{{ next_url }}";
-    }
+   const playerColors = {
+  "1": "#ff7a00",  
+  "2": "#d32f2f",  
+  "3": "#8c1d40",  
+  "4": "#ffb000"   
+};
+
+function next() {
+  const overlay = document.getElementById('overlay');
+  const player = "{{ current_player }}";
+  overlay.style.background = playerColors[player] || "#1a1a1a";
+  overlay.style.display = 'flex';
+  setTimeout(() => {
+    document.getElementById('answerForm').submit();
+  }, 1780);
+}
   </script>
+<div id="overlay" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  color:#fff;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:0.5rem;
+  z-index:999;
+  font-family:'DM Sans',sans-serif;
+">
+  <div style="font-size:3rem">
+    <img src="{{ url_for('static', filename='porco.jpg') }}" style="width:120px; border-radius:50%;">
+  </div>
+  <div style="font-size:1.4rem;font-weight:500;">{{ t.player_turn }}
+    {{1 if (current_player | int) + 1 > players 
+      else (current_player | int) + 1 }}</div>
+</div>
+
+</body>
 
 </body>
 </html>

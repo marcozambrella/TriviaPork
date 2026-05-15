@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scegli categoria</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background:  #f1e3be;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem;
+      gap: 2.5rem;
+    }
+
+    /* deco corners */
+    .corner{position:fixed;font-family:'Press Start 2P',cursive;font-size:0.55rem;color:#d4b87a;pointer-events:none;}
+    .corner.tl{top:1.2rem;left:1.5rem;}
+    .corner.tr{top:1.2rem;right:1.5rem;}
+    .corner.bl{bottom:1.2rem;left:1.5rem;}
+    .corner.br{bottom:1.2rem;right:1.5rem;}
+
+    .logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 0.6rem;
+}
+    .logo svg { width: 22px; height: 22px; }
+    .logo span { font-size: 0.95rem; font-weight: 500; color: #333; letter-spacing: 0.04em; }
+
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #1a1a1a;
+      letter-spacing: -0.01em;
+      text-align: center;
+    }
+
+    /* CATEGORIES */
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 700px;
+    }
+    .cat-btn {
+      background: #fff;
+      border: 1.5px solid #e0dada;
+      border-radius: 10px;
+      padding: 1.2rem 0.5rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      transition: border-color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+    .cat-btn .icon { font-size: 1.8rem; }
+    .cat-btn .label { font-size: 0.75rem; font-weight: 500; color: #555; }
+    .cat-btn:hover { border-color: #bbb; background: #faf8f8; }
+    .cat-btn.selected {
+      border-color: #1a1a1a;
+      background: #1a1a1a;
+    }
+    .cat-btn.selected .label { color: #fff; }
+
+    /* DIFFICULTY */
+    .diff-row {
+      display: flex;
+      gap: 0.6rem;
+    }
+    .diff-btn {
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 6px;
+      border: 1.5px solid #e0dada;
+      background: #fff;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #555;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .diff-btn:hover { border-color: #bbb; }
+    .diff-btn.selected {
+      border-color: #1a1a1a;
+      background: #1a1a1a;
+      color: #fff;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #aaa;
+      text-align: center;
+    }
+
+    .divider {
+      width: 100%;
+      max-width: 700px;
+      height: 1px;
+      background: #e8e4e4;
+    }
+
+    button.start {
+      font-size: 1rem;
+      font-weight: 500;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      padding: 0.85rem 2.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    button.start.active { opacity: 1; pointer-events: all; }
+    button.start.active:hover { opacity: 0.75; }
+
+    a.back {
+      font-size: 0.8rem;
+      font-weight: 300;
+      color: #999;
+      text-decoration: none;
+    }
+    a.back:hover { color: #555; }
+
+    /* difficulty color hints */
+    .diff-hint {
+      font-size: 0.7rem;
+      color: #bbb;
+      font-weight: 300;
+    }
+  </style>
+</head>
+<body>
+
+  
+ <div class="corner tl">TRIVIA</div>
+  <div class="corner tr">PORK</div>
+  <div class="corner bl">v1.0</div>
+  <div class="corner br">Made by Marco Zambrella</div>
+
+ <div style="display:flex; justify-content:center; width:100%;">
+  <div style="position:relative; display:inline-block;
+              transform: translate(-25px,70px);">
+
+    <img src="{{ url_for('static', filename='porco-oink.png') }}"  style="
+    width: 325px; "/>
+    <span style="
+      position: absolute;
+      top: 26%;
+      left: 54%;
+      transform: translateX(-60%);
+      font-family: 'Press Start 2P', cursive;
+      font-size: 1.4rem;
+      color: #1a1a1a;
+    ">Player {{ current_player }} turn</span>
+  </div>
+</div>
+
+  <h2 style="font-size: 1.6rem;">{{ t.choose }}</h2>
+
+<form action="/domande" method="POST">
+  <input type="hidden" name="category" id="inputCategory">
+  <input type="hidden" name="difficulty" id="inputDifficulty">
+
+  <div class="section-label">{{ t.category }}</div>
+  <div class="categories">
+    <button type="button" class="cat-btn" data-cat="scienza" onclick="selectCat(this)">
+      <span class="icon">🔬</span>
+      <span class="label">{{ t.science }}</span>
+    </button>
+    <button type="button" class="cat-btn" data-cat="storia" onclick="selectCat(this)">
+      <span class="icon">🏛️</span>
+      <span class="label">{{ t.history }}</span>
+    </button>
+    <button type="button" class="cat-btn" data-cat="sport" onclick="selectCat(this)">
+      <span class="icon">⚽</span>
+      <span class="label">{{ t.sport }}</span>
+    </button>
+    <button type="button" class="cat-btn" data-cat="cinema" onclick="selectCat(this)">
+      <span class="icon">🎬</span>
+      <span class="label">{{ t.cinema }}</span>
+    </button>
+    <button type="button" class="cat-btn" data-cat="geografia" onclick="selectCat(this)">
+      <span class="icon">🌍</span>
+      <span class="label">{{ t.geography }}</span>
+    </button>
+  </div>
+
+  
+
+  <div class="section-label">{{ t.difficulty }}</div>
+  <div class="diff-row">
+    <button type="button" class="diff-btn" data-diff="1" onclick="selectDiff(this)">1</button>
+    <button type="button" class="diff-btn" data-diff="2" onclick="selectDiff(this)">2</button>
+    <button type="button" class="diff-btn" data-diff="3" onclick="selectDiff(this)">3</button>
+    <button type="button" class="diff-btn" data-diff="4" onclick="selectDiff(this)">4</button>
+    <button type="button" class="diff-btn" data-diff="5" onclick="selectDiff(this)">5</button>
+  </div>
+  <div class="diff-hint" style="transform: translateX(5px);">{{ t.diff_hint | safe }}</div>
+
+  <button type="submit" class="start" id="startBtn" style="transform: translateY(2px);" >{{ t.confirm }}</button>
+</form>
+
+<footer style="width:100%; max-width:700px; background:#d6c397; border:0.5px solid #e0dada; border-radius:12px; padding:1rem 1.25rem; display:flex; flex-direction:column; gap:8px;">
+  {% set colors = ['#ffb000','#ff7a00','#d32f2f','#8c1d40'] %}
+  {% for i in range(1, players + 1) %}
+  {% set score = scores[i | string] %}
+  {% set pct = (score / 25 * 100) %}
+  {% if pct < 0 %}
+    {% set pct = 1 %}
+  {% endif %}
+  {% set width = pct | round | int %}
+  <div style="display:flex; align-items:center; gap:10px;">
+    <span style="font-size:12px; color:#000000; min-width:80px;">player {{ i }}</span>
+    <div style="flex:1; background:#f0ecec; border-radius:4px; height:10px;">
+      <div style="width:{{ width }}%; background:{{ colors[i-1] }}; border-radius:4px; height:10px; transition:width 0.3s;"></div>
+    </div>
+    <span style="font-size:13px; font-weight:500; min-width:24px;">{{ score }}</span>
+  </div>
+  {% endfor %}
+</footer>
+
+  <script>
+    let cat = null, diff = null;
+
+    function selectCat(el) {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+      cat = el.dataset.cat;
+      document.getElementById('inputCategory').value = cat;
+      check();
+    }
+
+    function selectDiff(el) {
+      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+      el.classList.add('selected');
+      diff = el.dataset.diff;
+      document.getElementById('inputDifficulty').value = diff;
+      check();
+    }
+
+    function check() {
+      document.getElementById('startBtn').classList.toggle('active', cat !== null && diff !== null);
+    }
+
+    
+  </script>
+
+</body>
+</html>
