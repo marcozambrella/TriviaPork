@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Domanda {{ numero }} — TriviApp</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f7f5f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      gap: 2rem;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      width: 100%;
+      max-width: 620px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .meta {
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
+    /* TIMER */
+    .timer-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .timer-circle {
+      position: relative;
+      width: 52px;
+      height: 52px;
+    }
+    .timer-circle svg {
+      transform: rotate(-90deg);
+      width: 52px;
+      height: 52px;
+    }
+    .timer-circle svg circle {
+      fill: none;
+      stroke-width: 3.5;
+    }
+    .timer-bg { stroke: #e8e4e4; }
+    .timer-fg {
+      stroke: #1a1a1a;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear, stroke 0.3s;
+      stroke-dasharray: 138.2; /* 2π * 22 */
+      stroke-dashoffset: 0;
+    }
+    .timer-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
+    /* PROGRESS BAR */
+    .progress-bar {
+      width: 100%;
+      max-width: 620px;
+      height: 4px;
+      background: #e8e4e4;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+
+    /* QUESTION */
+    .question-box {
+      width: 100%;
+      max-width: 620px;
+      background: #fff;
+      border: 1px solid #e8e4e4;
+      border-radius: 12px;
+      padding: 2rem;
+    }
+    .question-box p {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+
+    /* ANSWERS */
+    .answers {
+      width: 100%;
+      max-width: 620px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .answer-btn {
+      background: #fff;
+      border: 1.5px solid #e0dada;
+      border-radius: 10px;
+      padding: 1.1rem 1.2rem;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .answer-btn:hover:not(:disabled) { border-color: #bbb; background: #faf8f8; }
+    .answer-btn .letter {
+      min-width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 4px;
+      background: #f0ecec;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #888;
+    }
+
+    /* States */
+    .answer-btn.correct {
+      border-color: #2d9e6b;
+      background: #edf8f3;
+    }
+    .answer-btn.correct .letter { background: #2d9e6b; color: #fff; }
+
+    .answer-btn.wrong {
+      border-color: #e05454;
+      background: #fdf0f0;
+    }
+    .answer-btn.wrong .letter { background: #e05454; color: #fff; }
+
+    .answer-btn.timeout {
+      border-color: #e8a82a;
+      background: #fdf6e3;
+      opacity: 0.7;
+    }
+
+    .answer-btn:disabled { cursor: default; }
+
+    /* FEEDBACK */
+    .feedback {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #aaa;
+      min-height: 1.2rem;
+      text-align: center;
+    }
+    .feedback.ok { color: #2d9e6b; }
+    .feedback.ko { color: #e05454; }
+    .feedback.time { color: #e8a82a; }
+
+    /* NEXT BTN */
+    .next-btn {
+      font-size: 1rem;
+      font-weight: 500;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      padding: 0.85rem 2.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .next-btn.visible { opacity: 1; pointer-events: all; }
+    .next-btn:hover { opacity: 0.75; }
+
+    /* pig snout accent on topbar */
+    .pig-dots { display: flex; gap: 3px; align-items: center; }
+    .pig-dots span { width: 5px; height: 5px; border-radius: 50%; background: #f9c0cf; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <div class="pig-dots"><span></span><span></span></div>
+      <span class="meta">{{ categoria }} · Liv. {{ difficolta }}</span>
+    </div>
+
+  <!-- TIMER -->
+  <div class="timer-wrap">
+    <div class="timer-circle">
+      <svg viewBox="0 0 48 48">
+        <circle class="timer-bg" cx="24" cy="24" r="22"/>
+        <circle class="timer-fg" id="timerArc" cx="24" cy="24" r="22"/>
+      </svg>
+      <div class="timer-num" id="timerNum">{{ tempo }}</div>
+    </div>
+  </div>
+
+  <!-- QUESTION -->
+  <div class="question-box">
+    <p>{{ domanda }}</p>
+  </div>
+
+  <!-- ANSWERS -->
+  <div class="answers">
+    {% set lettere = ['A', 'B', 'C', 'D'] %}
+    {% for i in range(risposte | length) %}
+    <button
+      class="answer-btn"
+      id="btn-{{ i }}"
+      onclick="answer(this, {{ 'true' if loop.index0 == risposta_corretta else 'false' }})"
+      data-correct="{{ 'true' if loop.index0 == risposta_corretta else 'false' }}"
+    >
+      <span class="letter">{{ lettere[i] }}</span>
+      {{ risposte[i] }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <button class="next-btn" id="nextBtn" onclick="next()">
+    {% if numero < totale %}Prossima domanda{% else %}Vedi risultato{% endif %}
+  </button>
+
+  <script>
+    const TOTAL_TIME = {{ tempo }};
+    const CIRCUMFERENCE = 138.2;
+    let timeLeft = TOTAL_TIME;
+    let interval = null;
+    let answered = false;
+
+    const arc = document.getElementById('timerArc');
+    const num = document.getElementById('timerNum');
+
+    interval = setInterval(() => {
+      timeLeft--;
+      num.textContent = timeLeft;
+      arc.style.strokeDashoffset = CIRCUMFERENCE * (1 - timeLeft / TOTAL_TIME);
+
+      if (timeLeft <= 5) arc.style.stroke = '#e05454';
+      else if (timeLeft <= 10) arc.style.stroke = '#e8a82a';
+
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+        if (!answered) timeout();
+      }
+    }, 1000);
+
+    function answer(btn, isCorrect) {
+      if (answered) return;
+      answered = true;
+      clearInterval(interval);
+      disableAll();
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        showFeedback('Corretto! +' + timeLeft + ' pt', 'ok');
+      } else {
+        btn.classList.add('wrong');
+        revealCorrect();
+        showFeedback('Sbagliato', 'ko');
+      }
+      document.getElementById('nextBtn').classList.add('visible');
+    }
+
+    function timeout() {
+      answered = true;
+      disableAll();
+      document.querySelectorAll('.answer-btn').forEach(b => b.classList.add('timeout'));
+      revealCorrect();
+      showFeedback('Tempo scaduto!', 'time');
+      document.getElementById('nextBtn').classList.add('visible');
+    }
+
+    function revealCorrect() {
+      document.querySelectorAll('.answer-btn').forEach(b => {
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+      });
+    }
+
+    function disableAll() {
+      document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+    }
+
+    function showFeedback(msg, type) {
+      const el = document.getElementById('feedback');
+      el.textContent = msg;
+      el.className = 'feedback ' + type;
+    }
+
+    function next() {
+      window.location.href = "{{ next_url }}";
+    }
+  </script>
+
+</body>
+</html>
