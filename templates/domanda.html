@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Domanda {{ numero }} — TriviApp</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f1e3be;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      gap: 2rem;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      width: 100%;
+      max-width: 620px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .meta {
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
+    /* QUESTION */
+    .question-box {
+      width: 100%;
+      max-width: 620px;
+      background: #fff;
+      border: 1px solid #e8e4e4;
+      border-radius: 12px;
+      padding: 2rem;
+    }
+    .question-box p {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #1a1a1a;
+      line-height: 1.5;
+    }
+
+    /* ANSWERS */
+    .answers {
+      width: 100%;
+      max-width: 620px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .answer-btn {
+      background: #fff;
+      border: 1.5px solid #e0dada;
+      border-radius: 10px;
+      padding: 1.1rem 1.2rem;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 400;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .answer-btn:hover:not(:disabled) { border-color: #bbb; background: #faf8f8; }
+    .answer-btn .letter {
+      min-width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 4px;
+      background: #f0ecec;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #888;
+    }
+
+    /* States */
+    .answer-btn.correct {
+      border-color: #2d9e6b;
+      background: #edf8f3;
+    }
+    .answer-btn.correct .letter { background: #2d9e6b; color: #fff; }
+
+    .answer-btn.wrong {
+      border-color: #e05454;
+      background: #fdf0f0;
+    }
+    .answer-btn.wrong .letter { background: #e05454; color: #fff; }
+
+    .answer-btn.timeout {
+      border-color: #e8a82a;
+      background: #fdf6e3;
+      opacity: 0.7;
+    }
+
+    .answer-btn:disabled { cursor: default; }
+
+    /* FEEDBACK */
+    .feedback {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #aaa;
+      min-height: 1.2rem;
+      text-align: center;
+    }
+    .feedback.ok { color: #2d9e6b; }
+    .feedback.ko { color: #e05454; }
+    .feedback.time { color: #e8a82a; }
+
+    /* NEXT BTN */
+    .next-btn {
+      font-size: 1rem;
+      font-weight: 500;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      padding: 0.85rem 2.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .next-btn.visible { opacity: 1; pointer-events: all; }
+    .next-btn:hover { opacity: 0.75; }
+
+    /* pig snout accent on topbar */
+    .pig-dots { display: flex; gap: 3px; align-items: center; }
+    .pig-dots span { width: 5px; height: 5px; border-radius: 50%; background: #f9c0cf; }
+  </style>
+</head>
+<body>
+  
+  <div class="topbar">
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <div class="pig-dots"><span></span><span></span></div>
+      <span class="meta">{{ categoria }} · Liv. {{ difficolta }}</span>
+    </div>
+  </div>
+
+  <div class="question-box">
+    <p>{{ domanda }}</p>
+  </div>
+
+  <!-- form nascosto-->
+  <form id="answerForm" action="/risposta" method="POST" style="display:none;">
+    <input type="hidden" name="scelta"   id="inputScelta">
+    <input type="hidden" name="corretta" id="inputCorretta" value="{{ risposte[risposta_corretta] }}">
+  </form>
+
+  <div class="answers">
+    {% set lettere = ['A', 'B', 'C', 'D'] %}
+    {% for i in range(risposte | length) %}
+    <button
+      class="answer-btn"
+      id="btn-{{ i }}"
+      data-correct="{{ 'true' if loop.index0 == risposta_corretta else 'false' }}"
+      data-value="{{ risposte[i] }}"
+      onclick="answer(this)"
+    >
+      <span class="letter">{{ lettere[i] }}</span>
+      {{ risposte[i] }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+
+  <button class="next-btn" id="nextBtn" onclick="next()">{{ t.next_question }}</button>
+
+<script>
+  const MSG_CORRECT = "{{ t.correct_msg | safe }}";
+  const MSG_WRONG   = "{{ t.wrong_msg | safe }}";
+</script>
+
+  <script>
+    let answered = false;
+
+    function answer(btn) {
+      if (answered) return;
+      answered = true;
+      disableAll();
+
+      const isCorrect = btn.dataset.correct === 'true';
+      document.getElementById('inputScelta').value = btn.dataset.value;
+
+      if (isCorrect) {
+        btn.classList.add('correct');
+        showFeedback(MSG_CORRECT, 'ok');
+      } else {
+        btn.classList.add('wrong');
+        revealCorrect();
+        showFeedback(MSG_WRONG, 'ko');
+      }
+      document.getElementById('nextBtn').classList.add('visible');
+    }
+
+    function revealCorrect() {
+      document.querySelectorAll('.answer-btn').forEach(b => {
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+      });
+    }
+
+    function disableAll() {
+      document.querySelectorAll('.answer-btn').forEach(b => b.disabled = true);
+    }
+
+    function showFeedback(msg, type) {
+      const el = document.getElementById('feedback');
+      el.textContent = msg;
+      el.className = 'feedback ' + type;
+    }
+
+   const playerColors = {
+  "1": "#ff7a00",  
+  "2": "#d32f2f",  
+  "3": "#8c1d40",  
+  "4": "#ffb000"   
+};
+
+function next() {
+  const overlay = document.getElementById('overlay');
+  const player = "{{ current_player }}";
+  overlay.style.background = playerColors[player] || "#1a1a1a";
+  overlay.style.display = 'flex';
+  setTimeout(() => {
+    document.getElementById('answerForm').submit();
+  }, 1780);
+}
+  </script>
+<div id="overlay" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  color:#fff;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:0.5rem;
+  z-index:999;
+  font-family:'DM Sans',sans-serif;
+">
+  <div style="font-size:3rem">
+    <img src="{{ url_for('static', filename='porco.jpg') }}" style="width:120px; border-radius:50%;">
+  </div>
+  <div style="font-size:1.4rem;font-weight:500;">{{ t.player_turn }}
+    {{1 if (current_player | int) + 1 > players 
+      else (current_player | int) + 1 }}</div>
+</div>
+
+</body>
+
+</body>
+</html>
