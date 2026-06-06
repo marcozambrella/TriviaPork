@@ -57,8 +57,9 @@ def domande():
         session["category"] = request.form.get("category")
         session["difficulty"] = request.form.get("difficulty")
         return redirect("/domanda")
-    if any(int(i) >= 25 for i in session["scores"]):
-        return redirect("/vincitore")
+    for i in session["scores"]:
+        if session["scores"][i] >= 25:
+         return redirect("/vincitore")
     
     return render_template("domande.html",
                            current_player = session.get("current_player"),
