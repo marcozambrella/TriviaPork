@@ -21,7 +21,7 @@ translations = {
         "goal": "Traguardo",
         "max_diff": "Max difficoltà",
         "min_diff": "Min difficoltà",
-        "thanks": "Grazie per aver scelto <strong>TriviaPork</strong>.<br>Che vinca il più migliore o il più fortunato.",
+        "thanks": "Grazie per aver scelto <strong>TriviaPork</strong>.<br>Che vinca il migliore o il più fortunato.",
         "start": "INIZIA ↗",
         "click_hint": "▶ clicca per continuare",
 
