@@ -1,5 +1,5 @@
 # TRIVIA PORK
-### video url:
+### video url: https://youtu.be/i9m1mST5NSY
 ### description:
 
 the project is composed by 2 principal areas: ` app.py ` and the ` templates ` folder. In app.py, there is the entire backend of the application.
